@@ -25,16 +25,15 @@ function App() {
     }, []); // Make sure the effect runs only once
   };
 
+  const [time, setTime] = useState(0);
   const Timer = () => {
-    const [count, setCount] = useState(0);
-
     useAnimationFrame((deltaTime: any) => {
       // Pass on a function to the setter of the state
       // to make sure we always have the latest state
-      setCount((prevCount) => (prevCount + deltaTime * 0.01) % 100);
+      setTime((prevTime) => prevTime + deltaTime * 0.002);
     });
 
-    return <div>{Math.round(count)}</div>;
+    return <div>{Math.round(time)}</div>;
   };
 
   const draw = (
@@ -79,7 +78,8 @@ function App() {
 
     //#region Circle
     const arcRadius = length * 0.05;
-    const distance = Math.PI;
+    const velocity = 1;
+    const distance = Math.PI + time * velocity;
 
     const x = center.x + arcRadius * Math.cos(distance);
     const y = center.y + arcRadius * Math.sin(distance);
