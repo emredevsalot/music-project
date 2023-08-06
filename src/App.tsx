@@ -26,7 +26,7 @@ function App() {
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
 
-    // Line
+    //#region Line
     const start = {
       x: canvas.width * 0.1,
       y: canvas.height * 0.9,
@@ -44,8 +44,9 @@ function App() {
     context.moveTo(start.x, start.y);
     context.lineTo(end.x, end.y);
     context.stroke();
+    //#endregion
 
-    // Arc
+    //#region Arc
     const center = {
       x: canvas.width * 0.5,
       y: canvas.height * 0.9,
@@ -56,8 +57,9 @@ function App() {
     context.beginPath();
     context.arc(center.x, center.y, length * 0.05, Math.PI, 2 * Math.PI);
     context.stroke();
+    //#endregion
 
-    // Circle
+    //#region Circle
     const arcRadius = length * 0.05;
     const distance = Math.PI;
 
@@ -67,6 +69,7 @@ function App() {
     context.beginPath();
     context.arc(x, y, length * 0.0065, 0, 2 * Math.PI);
     context.fill();
+    //#endregion
   };
 
   const Canvas = () => {
@@ -80,7 +83,8 @@ function App() {
       if (!context) return;
 
       draw(canvas, context);
-    }, [draw, counter]);
+      console.log("hey");
+    }, [draw]);
 
     return (
       <canvas className="h-screen w-screen bg-slate-900" ref={canvasRef} />
