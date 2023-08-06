@@ -79,10 +79,14 @@ function App() {
     //#region Circle
     const arcRadius = length * 0.05;
     const velocity = 1;
+    const maxAngle = 2 * Math.PI;
     const distance = Math.PI + time * velocity;
+    const modDistance = distance % maxAngle;
+    const adjustedDistance =
+      modDistance >= Math.PI ? modDistance : maxAngle - modDistance;
 
-    const x = center.x + arcRadius * Math.cos(distance);
-    const y = center.y + arcRadius * Math.sin(distance);
+    const x = center.x + arcRadius * Math.cos(adjustedDistance);
+    const y = center.y + arcRadius * Math.sin(adjustedDistance);
 
     context.beginPath();
     context.arc(x, y, length * 0.0065, 0, 2 * Math.PI);
