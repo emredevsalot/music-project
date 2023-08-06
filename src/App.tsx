@@ -1,23 +1,41 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 function App() {
-  //#region Timer
-  const [counter, setCounter] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
-  useLayoutEffect(() => {
-    if (timerRunning) {
-      let timerId: any;
 
-      const animate = () => {
-        setCounter((c) => c + 1);
-        timerId = requestAnimationFrame(animate);
-      };
-      timerId = requestAnimationFrame(animate);
-      return () => cancelAnimationFrame(timerId);
-    }
-  }, [timerRunning]);
-  //#endregion
+  const useAnimationFrame = (callback: any) => {
+    // Use useRef for mutable variables that we want to persist
+    // without triggering a re-render on their change
+    const requestRef = useRef<any>();
+    const previousTimeRef = useRef();
+
+    const animate = (time: any) => {
+      if (previousTimeRef.current != undefined && timerRunning) {
+        const deltaTime = time - previousTimeRef.current;
+        callback(deltaTime);
+      }
+      previousTimeRef.current = time;
+      requestRef.current = requestAnimationFrame(animate);
+    };
+
+    useEffect(() => {
+      requestRef.current = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(requestRef.current);
+    }, []); // Make sure the effect runs only once
+  };
+
+  const Timer = () => {
+    const [count, setCount] = useState(0);
+
+    useAnimationFrame((deltaTime: any) => {
+      // Pass on a function to the setter of the state
+      // to make sure we always have the latest state
+      setCount((prevCount) => (prevCount + deltaTime * 0.01) % 100);
+    });
+
+    return <div>{Math.round(count)}</div>;
+  };
 
   const draw = (
     canvas: HTMLCanvasElement,
@@ -83,7 +101,6 @@ function App() {
       if (!context) return;
 
       draw(canvas, context);
-      console.log("hey");
     }, [draw]);
 
     return (
@@ -97,7 +114,7 @@ function App() {
         <button onClick={() => setTimerRunning(!timerRunning)}>
           {timerRunning ? "Stop" : "Start"}
         </button>
-        <h3>Frame count: {counter}</h3>
+        <Timer />
       </div>
       <Canvas />
     </>
