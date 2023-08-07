@@ -6,7 +6,7 @@ import Canvas from "./components/Canvas";
 import useTimer from "./hooks/useTimer";
 
 const arcs: Arc[] = colors.map((color, index) => {
-  const audio = new Audio(`/key${index + 1}.mp3`);
+  const audio = new Audio(`./key${index + 1}.mp3`);
   audio.volume = settings.audioVolume;
 
   const numberOfLoops = settings.tau * (settings.maxLoops - index);
