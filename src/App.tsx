@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const colors = [
@@ -15,7 +15,7 @@ const colors = [
 
 const settings = {
   tau: 2 * Math.PI,
-  maxLoops: Math.max(colors.length, 60), // Maximum loop amount the fastest element will make. (Must be above colors.length)
+  maxLoops: Math.max(colors.length, 40), // Maximum loop amount the fastest element will make. (Must be above colors.length)
   realignDuration: 600, // Total time for all dots to realign at the starting point
   audioVolume: 0.2,
 };
@@ -48,9 +48,63 @@ const arcs = colors.map((color, index) => {
   };
 });
 
+const useAnimationFrame = (callback: any, timerRunning: boolean) => {
+  // Use useRef for mutable variables that we want to persist
+  // without triggering a re-render on their change
+  const requestRef = useRef<any>();
+  const previousTimeRef = useRef();
+
+  const animate = (time: any) => {
+    if (previousTimeRef.current != undefined && timerRunning) {
+      const deltaTime = time - previousTimeRef.current;
+      callback(deltaTime);
+    }
+    previousTimeRef.current = time;
+    requestRef.current = requestAnimationFrame(animate);
+  };
+
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [timerRunning]);
+};
+
+type TimerProps = {
+  deltaTimeSetter: React.Dispatch<React.SetStateAction<number>>;
+  timerRunning: boolean;
+};
+const Timer = ({ deltaTimeSetter, timerRunning }: TimerProps) => {
+  useAnimationFrame((deltaTime: any) => {
+    deltaTimeSetter((prevTime) => prevTime + deltaTime * 0.001);
+  }, timerRunning);
+  return null;
+};
+
+const Canvas = ({
+  draw,
+}: {
+  draw: (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    draw(canvas, context);
+  }, [draw]);
+
+  return <canvas className="h-screen w-screen bg-slate-900" ref={canvasRef} />;
+};
+
 function App() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [time, setTime] = useState(0);
+
   const toggleTimer = () => {
     setTimerRunning(!timerRunning);
   };
@@ -58,41 +112,10 @@ function App() {
   const toggleSound = () => {
     setSoundEnabled(!soundEnabled);
   };
+
   useEffect(() => {
     document.onvisibilitychange = () => setSoundEnabled(false);
   }, []);
-
-  const useAnimationFrame = (callback: any) => {
-    // Use useRef for mutable variables that we want to persist
-    // without triggering a re-render on their change
-    const requestRef = useRef<any>();
-    const previousTimeRef = useRef();
-
-    const animate = (time: any) => {
-      if (previousTimeRef.current != undefined && timerRunning) {
-        const deltaTime = time - previousTimeRef.current;
-        callback(deltaTime);
-      }
-      previousTimeRef.current = time;
-      requestRef.current = requestAnimationFrame(animate);
-    };
-
-    useEffect(() => {
-      requestRef.current = requestAnimationFrame(animate);
-      return () => cancelAnimationFrame(requestRef.current);
-    }, []); // Make sure the effect runs only once
-  };
-
-  const [time, setTime] = useState(0);
-  const Timer = () => {
-    useAnimationFrame((deltaTime: any) => {
-      // Pass on a function to the setter of the state
-      // to make sure we always have the latest state
-      setTime((prevTime) => prevTime + deltaTime * 0.002);
-    });
-
-    return <div>{Math.round(time)}</div>;
-  };
 
   const draw = (
     canvas: HTMLCanvasElement,
@@ -157,11 +180,6 @@ function App() {
       context.arc(x, y, lineLength * 0.025, 0, 2 * Math.PI);
       context.fill();
 
-      if (index === 0) {
-        console.log("Time: ", time.toFixed(2));
-        console.log("arc.nextImpactTime", arc.nextImpactTime);
-      }
-
       if (time >= arc.nextImpactTime) {
         if (soundEnabled) {
           arc.audio.play();
@@ -176,24 +194,6 @@ function App() {
     //#endregion
   };
 
-  const Canvas = () => {
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const context = canvas.getContext("2d");
-      if (!context) return;
-
-      draw(canvas, context);
-    }, [draw]);
-
-    return (
-      <canvas className="h-screen w-screen bg-slate-900" ref={canvasRef} />
-    );
-  };
-
   return (
     <>
       <div className="absolute text-white flex gap-4">
@@ -202,9 +202,10 @@ function App() {
           {soundEnabled ? "Mute" : "Unmute"}
         </button>
         <button onClick={playTestAudio}>Test Audio</button>
-        <Timer />
+        <Timer deltaTimeSetter={setTime} timerRunning={timerRunning} />
+        <div>{Math.round(time)}</div>
       </div>
-      <Canvas />
+      <Canvas draw={draw} />
     </>
   );
 }
