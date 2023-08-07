@@ -1,39 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
+import { colors, settings } from "./utils/constants";
+import { calculateNextImpactTime, playTestAudio } from "./utils/helpers";
+import Canvas from "./components/Canvas";
+import Timer from "./components/Timer";
 
-const colors = [
-  "#FAF0CA",
-  "#F4D35E",
-  "#EE964B",
-  "#F95738",
-  "#EE964B",
-  "#F4D35E",
-  "#FAF0CA",
-  "#F4D35E",
-  "#EE964B",
-];
-
-const settings = {
-  tau: 2 * Math.PI,
-  maxLoops: Math.max(colors.length, 40), // Maximum loop amount the fastest element will make. (Must be above colors.length)
-  realignDuration: 600, // Total time for all dots to realign at the starting point
-  audioVolume: 0.2,
-};
-
-const playTestAudio = () => {
-  const audio = new Audio(`/key1.mp3`);
-  audio.volume = settings.audioVolume;
-  audio.play();
-};
-
-const calculateNextImpactTime = (
-  currentImpactTime: number,
-  velocity: number
-) => {
-  return currentImpactTime + Math.PI / velocity;
-};
-
-const arcs = colors.map((color, index) => {
+const arcs: Arc[] = colors.map((color, index) => {
   const audio = new Audio(`/key${index + 1}.mp3`);
   audio.volume = settings.audioVolume;
 
@@ -47,58 +19,6 @@ const arcs = colors.map((color, index) => {
     nextImpactTime,
   };
 });
-
-const useAnimationFrame = (callback: any, timerRunning: boolean) => {
-  // Use useRef for mutable variables that we want to persist
-  // without triggering a re-render on their change
-  const requestRef = useRef<any>();
-  const previousTimeRef = useRef();
-
-  const animate = (time: any) => {
-    if (previousTimeRef.current != undefined && timerRunning) {
-      const deltaTime = time - previousTimeRef.current;
-      callback(deltaTime);
-    }
-    previousTimeRef.current = time;
-    requestRef.current = requestAnimationFrame(animate);
-  };
-
-  useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [timerRunning]);
-};
-
-type TimerProps = {
-  deltaTimeSetter: React.Dispatch<React.SetStateAction<number>>;
-  timerRunning: boolean;
-};
-const Timer = ({ deltaTimeSetter, timerRunning }: TimerProps) => {
-  useAnimationFrame((deltaTime: any) => {
-    deltaTimeSetter((prevTime) => prevTime + deltaTime * 0.001);
-  }, timerRunning);
-  return null;
-};
-
-const Canvas = ({
-  draw,
-}: {
-  draw: (canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => void;
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    draw(canvas, context);
-  }, [draw]);
-
-  return <canvas className="h-screen w-screen bg-slate-900" ref={canvasRef} />;
-};
 
 function App() {
   const [timerRunning, setTimerRunning] = useState(false);
