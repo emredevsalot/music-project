@@ -3,7 +3,7 @@ import "./App.css";
 import { colors, settings } from "./utils/constants";
 import { calculateNextImpactTime, playTestAudio } from "./utils/helpers";
 import Canvas from "./components/Canvas";
-import Timer from "./components/Timer";
+import useTimer from "./hooks/useTimer";
 
 const arcs: Arc[] = colors.map((color, index) => {
   const audio = new Audio(`/key${index + 1}.mp3`);
@@ -114,6 +114,8 @@ function App() {
     //#endregion
   };
 
+  useTimer(timerRunning, setTime);
+
   return (
     <>
       <div className="absolute text-white flex gap-4">
@@ -122,7 +124,7 @@ function App() {
           {soundEnabled ? "Mute" : "Unmute"}
         </button>
         <button onClick={playTestAudio}>Test Audio</button>
-        <Timer deltaTimeSetter={setTime} timerRunning={timerRunning} />
+        {/* <Timer deltaTimeSetter={setTime} timerRunning={timerRunning} /> */}
         <div>{Math.round(time)}</div>
       </div>
       <Canvas draw={draw} />
